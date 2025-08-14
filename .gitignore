@@ -1,0 +1,7 @@
+node_modules
+client/dist
+.vscode
+.venv
+__pycache__
+.env
+server/.env
