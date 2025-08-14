@@ -3,6 +3,7 @@ import jwt
 from ..config import settings
 from ..database import SessionLocal
 from .. import models
+from datetime import datetime
 
 
 mgr = socketio.AsyncRedisManager(url=None) if False else None  # placeholder for future scale-out
@@ -61,9 +62,10 @@ async def chat_message(sid, data):
     room = sess.get("session_code")
     user_email = sess.get("user_email") or "anon"
     content = (data or {}).get("content", "")
+    created_at = datetime.utcnow().isoformat()
 
     # Broadcast
-    await sio.emit("chat_message", {"user": user_email, "content": content}, room=room, skip_sid=None)
+    await sio.emit("chat_message", {"user": user_email, "content": content, "created_at": created_at}, room=room, skip_sid=None)
 
     # Persist message (best-effort)
     try:

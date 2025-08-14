@@ -13,7 +13,7 @@ export default function EditorPage() {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [document, setDocument] = useState<Doc | null>(null)
   const [docs, setDocs] = useState<Doc[]>([])
-  const [messages, setMessages] = useState<{user?:string; content:string}[]>([])
+  const [messages, setMessages] = useState<{user?:string; content:string; created_at?:string}[]>([])
   const userEmail = useSessionStore(s => s.userEmail)
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function EditorPage() {
       setDocument(docsRes.data[0])
       // Load chat history
       const hist = await axios.get(`/api/sessions/${sessionId}/messages`, { headers: { Authorization: `Bearer ${token}` }})
-      setMessages((hist.data || []).map((m:any) => ({ user: m.user_email || 'anon', content: m.content })))
+      setMessages((hist.data || []).map((m:any) => ({ user: m.user_email || 'anon', content: m.content, created_at: m.created_at })))
     })()
   }, [code, navigate])
 
@@ -40,7 +40,7 @@ export default function EditorPage() {
     s.on('editor_change', (data:{document_id?:number; content:string}) => {
       setDocument(d => d && (!data.document_id || d.id === data.document_id) ? { ...d, content: data.content } : d)
     })
-    s.on('chat_message', (data:{user?:string; content:string}) => {
+    s.on('chat_message', (data:{user?:string; content:string; created_at?:string}) => {
       setMessages(m => [...m, data])
     })
     setSocket(s)
@@ -78,7 +78,8 @@ export default function EditorPage() {
         <div style={{ fontWeight: 500 }}>Session {code}</div>
         <div>
           <span style={{ marginRight: 12, color: '#64748b' }}>{userEmail}</span>
-          <button onClick={save} style={{ padding: '6px 12px', background: '#1a73e8', color: '#fff', border: 0, borderRadius: 6 }}>Save</button>
+          <button onClick={save} style={{ padding: '6px 12px', background: '#1a73e8', color: '#fff', border: 0, borderRadius: 6, marginRight: 8 }}>Save</button>
+          <button onClick={()=>navigate('/')} style={{ padding: '6px 12px', background: '#ef4444', color: '#fff', border: 0, borderRadius: 6 }}>Exit</button>
         </div>
       </div>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -102,9 +103,17 @@ export default function EditorPage() {
           </div>
           <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', borderBottom: '1px solid #e5e7eb', background: '#fff' }}>Chat</div>
           <div style={{ flex: 1, overflow: 'auto', padding: 12, background: '#fff' }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ fontSize: 14, marginBottom: 8 }}><span style={{ color: '#64748b' }}>{m.user || 'anon'}:</span> {m.content}</div>
-            ))}
+            {messages.map((m, i) => {
+              const mine = m.user === userEmail
+              return (
+                <div key={i} style={{ display: 'flex', justifyContent: mine?'flex-end':'flex-start', marginBottom: 8 }}>
+                  <div style={{ maxWidth: 220, background: mine?'#dcfce7':'#e0f2fe', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>{m.user || 'anon'}{m.created_at?` • ${new Date(m.created_at).toLocaleTimeString()}`:''}</div>
+                    <div style={{ fontSize: 14 }}>{m.content}</div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
           <div style={{ padding: 8, borderTop: '1px solid #e5e7eb', background: '#fff' }}>
             <div style={{ display: 'flex', gap: 8 }}>
