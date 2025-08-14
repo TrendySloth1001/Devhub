@@ -14,6 +14,7 @@ export default function EditorPage() {
   const [document, setDocument] = useState<Doc | null>(null)
   const [docs, setDocs] = useState<Doc[]>([])
   const [messages, setMessages] = useState<{user?:string; content:string; created_at?:string}[]>([])
+  const [tab, setTab] = useState<'files'|'chat'>('files')
   const userEmail = useSessionStore(s => s.userEmail)
 
   useEffect(() => {
@@ -93,34 +94,43 @@ export default function EditorPage() {
             options={{ minimap: { enabled: false }, fontSize: 14 }}
           />
         </div>
-        <div style={{ width: 320, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', borderBottom: '1px solid #e5e7eb', background: '#fff' }}>Files</div>
-          <div style={{ maxHeight: 160, overflow: 'auto', padding: 12, background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
-            {docs.map(d => (
-              <div key={d.id} onClick={()=>setDocument(d)} style={{ padding: '6px 8px', borderRadius: 6, cursor: 'pointer', background: document?.id===d.id?'#eef2ff':'transparent' }}>{d.title}</div>
-            ))}
-            <CreateFile code={code!} onCreated={(doc)=>{ setDocs(x=>[...x, doc]); setDocument(doc) }} />
+        <div style={{ width: 360, display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(6px)' }}>
+          <div className="tabs" style={{ padding: 8, borderBottom: '1px solid #e5e7eb' }}>
+            <div className={`tab ${tab==='files'?'active':''}`} onClick={()=>setTab('files')}>Files</div>
+            <div className={`tab ${tab==='chat'?'active':''}`} onClick={()=>setTab('chat')}>Chat</div>
           </div>
-          <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', borderBottom: '1px solid #e5e7eb', background: '#fff' }}>Chat</div>
-          <div style={{ flex: 1, overflow: 'auto', padding: 12, background: '#fff' }}>
-            {messages.map((m, i) => {
-              const mine = m.user === userEmail
-              return (
-                <div key={i} style={{ display: 'flex', justifyContent: mine?'flex-end':'flex-start', marginBottom: 8 }}>
-                  <div style={{ maxWidth: 220, background: mine?'#dcfce7':'#e0f2fe', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 10px' }}>
-                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>{m.user || 'anon'}{m.created_at?` • ${new Date(m.created_at).toLocaleTimeString()}`:''}</div>
-                    <div style={{ fontSize: 14 }}>{m.content}</div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div style={{ padding: 8, borderTop: '1px solid #e5e7eb', background: '#fff' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input value={chatInput} onChange={e=>setChatInput(e.target.value)} placeholder="Type a message" style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 8px' }} />
-              <button onClick={sendChat} style={{ padding: '6px 12px', background: '#1a73e8', color: '#fff', borderRadius: 6, border: 0 }}>Send</button>
+          {tab === 'files' ? (
+            <div style={{ padding: 12 }}>
+              <div style={{ maxHeight: 220, overflow: 'auto' }}>
+                {docs.map(d => (
+                  <div key={d.id} onClick={()=>setDocument(d)} className="card-hover" style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', background: document?.id===d.id?'#eef2ff':'#fff', border: '1px solid #e5e7eb', marginBottom: 8 }}>{d.title}</div>
+                ))}
+              </div>
+              <CreateFile code={code!} onCreated={(doc)=>{ setDocs(x=>[...x, doc]); setDocument(doc) }} />
             </div>
-          </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
+                {messages.map((m, i) => {
+                  const mine = m.user === userEmail
+                  return (
+                    <div key={i} style={{ display: 'flex', justifyContent: mine?'flex-end':'flex-start', marginBottom: 8 }}>
+                      <div style={{ maxWidth: 260, background: mine?'#dcfce7':'#e0f2fe', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 10px' }}>
+                        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>{m.user || 'anon'}{m.created_at?` • ${new Date(m.created_at).toLocaleTimeString()}`:''}</div>
+                        <div style={{ fontSize: 14 }}>{m.content}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ padding: 8, borderTop: '1px solid #e5e7eb', background: '#fff' }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={chatInput} onChange={e=>setChatInput(e.target.value)} placeholder="Type a message" style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 8px' }} />
+                  <button onClick={sendChat} className="btn btn-primary">Send</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
